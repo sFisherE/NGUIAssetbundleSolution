@@ -1,0 +1,3 @@
+界面由界面元素组成，界面元素依赖的外部资源有贴图、声音文件，贴图的来源按照界面元素的类别分：UIWidget依赖图片集和font文件，UITexture依赖texture。
+
+打包的时候先PushAssetDependencies相关的图片集、字体文件、texture，然后打包界面prefab。
