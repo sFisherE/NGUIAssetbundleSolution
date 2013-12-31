@@ -8,7 +8,6 @@ using Object = UnityEngine.Object;
 
 class NGUIAssetbundleSolutionMenu
 {
-
     [MenuItem("NGUIAssetbundleSolution/Unload All Resources")]
     //how to unload all the resources in editor???
     public static void UnloadAllResources()
@@ -43,6 +42,7 @@ class NGUIAssetbundleSolutionMenu
             Build(obj as GameObject);
         }
         EditorUtility.SetDirty(UIAssetbundleSettings.instance);
+        AssetDatabase.Refresh();
     }
 
     static void Build(GameObject go)
@@ -63,38 +63,94 @@ class NGUIAssetbundleSolutionMenu
         UIAssetbundleSettings.instance.dependencies.Add(dep);
 
         UISprite[] ws = go.GetComponentsInChildren<UISprite>(true);
-        List<UIAtlas> atlases = new List<UIAtlas>();
         List<Texture> textures = new List<Texture>();
         foreach (var w in ws)
         {
-            UIAtlas tempAtlas = w.atlas;
-            if (!atlases.Contains(tempAtlas))
+            Texture tex = w.atlas.texture;
+            if (tex != null && !textures.Contains(tex))
+                textures.Add(tex);
+        }
+        //UITexture will use another strategy
+
+
+
+        UILabel[] labels = go.GetComponentsInChildren<UILabel>(true);
+        List<UIFont> uiFonts = new List<UIFont>();
+        List<Font> dynamicfonts = new List<Font>();
+        foreach ( var label in labels)
+        {
+            UIFont uifont = label.font;
+            if (uifont.isDynamic)
             {
-                atlases.Add(tempAtlas);
-                textures.Add(tempAtlas.texture);
+                Font f = uifont.dynamicFont;
+                if (f!=null && !dynamicfonts.Contains(f))
+                    dynamicfonts.Add(f);
+            }
+            else
+            {
+                Texture tex = uifont.texture;
+                if (tex != null && !textures.Contains(tex))
+                    textures.Add(tex);
             }
         }
 
+        UIButtonSound[] sounds = go.GetComponentsInChildren<UIButtonSound>(true);
+        List<AudioClip> clips = new List<AudioClip>();
+        foreach (var sound in sounds)
+        {
+            AudioClip audio = sound.audioClip;
+            if (audio != null && !clips.Contains(sound.audioClip))
+                clips.Add(sound.audioClip);
+        }
+        //////////////////////////////////////////////////////////////////////////
         BuildPipeline.PushAssetDependencies();
         foreach (var tex in textures)
         {
             string path = AssetDatabase.GetAssetPath(tex.GetInstanceID());
+            //Debug.Log(UIAssetbundleSettings.buildTextureTargetPath);
             string fileName = tex.name + UIAssetbundleSettings.ext;
             BuildPipeline.BuildAssetBundle(
                AssetDatabase.LoadMainAssetAtPath(path),
                null,
-               UIAssetbundleSettings.buildTextureTargetPath + fileName,
-               options);
+               UIAssetbundleSettings.buildTextureTargetPath + "/" + fileName,
+               options,
+               UIAssetbundleSettings.instance.buildTarget);
 
             dep.atlasPaths.Add(fileName);
         }
+        foreach (var font in dynamicfonts)
+        {
+            string path = AssetDatabase.GetAssetPath(font.GetInstanceID());
+            string fileName = font.name + UIAssetbundleSettings.ext;
+            BuildPipeline.BuildAssetBundle(
+               AssetDatabase.LoadMainAssetAtPath(path),
+               null,
+               UIAssetbundleSettings.buildFontTargetPath +"/"+ fileName,
+               options,
+               UIAssetbundleSettings.instance.buildTarget);
+            dep.fontPaths.Add(fileName);
+        }
+        foreach ( var clip in clips)
+        {
+            string path = AssetDatabase.GetAssetPath(clip.GetInstanceID());
+            string fileName = clip.name + UIAssetbundleSettings.ext;
+            BuildPipeline.BuildAssetBundle(
+               AssetDatabase.LoadMainAssetAtPath(path),
+               null,
+               UIAssetbundleSettings.buildAudioTargetPath+"/" + fileName,
+               options,
+               UIAssetbundleSettings.instance.buildTarget);
+            dep.audioPaths.Add(fileName);
+        }
+        //////////////////////////////////////////////////////////////////////////
         BuildPipeline.PushAssetDependencies();
         string goPath = AssetDatabase.GetAssetPath(go.GetInstanceID());
         BuildPipeline.BuildAssetBundle(
           AssetDatabase.LoadMainAssetAtPath(goPath),
           null,
-          UIAssetbundleSettings.buildTargetPath + go.name + UIAssetbundleSettings.ext,
-          options);
+          UIAssetbundleSettings.buildTargetPath + "/" + go.name + UIAssetbundleSettings.ext,
+          options,
+          UIAssetbundleSettings.instance.buildTarget);
 
         BuildPipeline.PopAssetDependencies();
         BuildPipeline.PopAssetDependencies();
