@@ -40,35 +40,10 @@ public class UIAssetbundleSettings : ScriptableObject
    public static string buildFontTargetPath { get { return CreateAssetPath("UI/Fonts"); } }
    public static string buildAudioTargetPath { get { return CreateAssetPath("UI/Audios"); } }
 
-#if UNITY_EDITOR ||  UNITY_STANDALONE_WIN
-    public static string pathUrl = "file://" + Application.dataPath + "/StreamingAssets/UI";
-#elif UNITY_ANDROID
-    public static string pathUrl = "jar:file://" + Application.dataPath + "!/assets/UI";
-#elif UNITY_IPHONE
-    public static string pathUrl = Application.dataPath + "/Raw/UI";
-#endif
-    public static string texturePathUrl = pathUrl + "/Textures";
-    public static string fontPathUrl = pathUrl + "/Fonts";
-    public static string audioPathUrl = pathUrl + "/Audios";
-
-
-    public const string ext = ".unity3d";
-
 #if UNITY_EDITOR
     [SerializeField]
     public BuildTarget buildTarget=BuildTarget.Android;
 #endif
-
-    [System.Serializable]
-    public class Dependency
-    {
-        public string name;
-        public List<string> atlasPaths = new List<string>();
-        public List<string> fontPaths = new List<string>();
-        public List<string> audioPaths = new List<string>();
-    }
-    [SerializeField]
-    public List<Dependency> dependencies = new List<Dependency>();
 
     
 

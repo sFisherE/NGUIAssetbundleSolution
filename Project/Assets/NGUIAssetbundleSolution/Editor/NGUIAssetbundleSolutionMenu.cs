@@ -15,7 +15,21 @@ class NGUIAssetbundleSolutionMenu
         Caching.CleanCache();
         Resources.UnloadUnusedAssets();
     }
-
+    [MenuItem("NGUIAssetbundleSolution/Create AssetbundleInfo")]
+    public static UIAssetbundleInfo CreateAssetbundleInfo()
+    {
+        var path = System.IO.Path.Combine("Assets/NGUIAssetbundleSolution/Resources", "AssetbundleInfo.asset");
+        var so = AssetDatabase.LoadMainAssetAtPath(path) as UIAssetbundleInfo;
+        if (so)
+            return so;
+        so = ScriptableObject.CreateInstance<UIAssetbundleInfo>();
+        DirectoryInfo di = new DirectoryInfo(Application.dataPath + "/NGUIAssetbundleSolution/Resources");
+        if (!di.Exists)
+            di.Create();
+        AssetDatabase.CreateAsset(so, path);
+        AssetDatabase.SaveAssets();
+        return so;
+    }
     [MenuItem("NGUIAssetbundleSolution/Create AssetbundleSettings")]
     public static UIAssetbundleSettings CreateAssetbundleSettings()
     {
@@ -39,9 +53,19 @@ class NGUIAssetbundleSolutionMenu
 
         foreach (Object obj in SelectedAsset)
         {
-            Build(obj as GameObject);
+            GameObject go = obj as GameObject;
+            if (go != null)
+            {
+                UIPanelBase com = go.GetComponent<UIPanelBase>();
+                if (com == null)
+                {
+                    Debug.LogError("the gameobject must have UIPanelBase component");
+                }
+                else
+                    Build(obj as GameObject);
+            }
         }
-        EditorUtility.SetDirty(UIAssetbundleSettings.instance);
+        EditorUtility.SetDirty(UIAssetbundleInfo.instance);
         AssetDatabase.Refresh();
     }
 
@@ -55,12 +79,12 @@ class NGUIAssetbundleSolutionMenu
              BuildAssetBundleOptions.CompleteAssets |
              BuildAssetBundleOptions.DeterministicAssetBundle;
 
-        UIAssetbundleSettings.Dependency dep = new UIAssetbundleSettings.Dependency();
+        UIAssetbundleInfo.Dependency dep = new UIAssetbundleInfo.Dependency();
         dep.name = go.name;
-        UIAssetbundleSettings.Dependency exist=UIAssetbundleSettings.instance.dependencies.Find(p => p.name == go.name);
-        if (exist!=null)
-            UIAssetbundleSettings.instance.dependencies.Remove(exist);
-        UIAssetbundleSettings.instance.dependencies.Add(dep);
+        UIAssetbundleInfo.Dependency exist = UIAssetbundleInfo.instance.dependencies.Find(p => p.name == go.name);
+        if (exist != null)
+            UIAssetbundleInfo.instance.dependencies.Remove(exist);
+        UIAssetbundleInfo.instance.dependencies.Add(dep);
 
         UISprite[] ws = go.GetComponentsInChildren<UISprite>(true);
         List<Texture> textures = new List<Texture>();
@@ -77,13 +101,13 @@ class NGUIAssetbundleSolutionMenu
         UILabel[] labels = go.GetComponentsInChildren<UILabel>(true);
         List<UIFont> uiFonts = new List<UIFont>();
         List<Font> dynamicfonts = new List<Font>();
-        foreach ( var label in labels)
+        foreach (var label in labels)
         {
             UIFont uifont = label.font;
             if (uifont.isDynamic)
             {
                 Font f = uifont.dynamicFont;
-                if (f!=null && !dynamicfonts.Contains(f))
+                if (f != null && !dynamicfonts.Contains(f))
                     dynamicfonts.Add(f);
             }
             else
@@ -94,7 +118,7 @@ class NGUIAssetbundleSolutionMenu
             }
         }
 
-        UIButtonSound[] sounds = go.GetComponentsInChildren<UIButtonSound>(true);
+        UIPlaySound[] sounds = go.GetComponentsInChildren<UIPlaySound>(true);
         List<AudioClip> clips = new List<AudioClip>();
         foreach (var sound in sounds)
         {
@@ -108,7 +132,7 @@ class NGUIAssetbundleSolutionMenu
         {
             string path = AssetDatabase.GetAssetPath(tex.GetInstanceID());
             //Debug.Log(UIAssetbundleSettings.buildTextureTargetPath);
-            string fileName = tex.name + UIAssetbundleSettings.ext;
+            string fileName = tex.name + UIAssetbundleInfo.ext;
             BuildPipeline.BuildAssetBundle(
                AssetDatabase.LoadMainAssetAtPath(path),
                null,
@@ -121,23 +145,23 @@ class NGUIAssetbundleSolutionMenu
         foreach (var font in dynamicfonts)
         {
             string path = AssetDatabase.GetAssetPath(font.GetInstanceID());
-            string fileName = font.name + UIAssetbundleSettings.ext;
+            string fileName = font.name + UIAssetbundleInfo.ext;
             BuildPipeline.BuildAssetBundle(
                AssetDatabase.LoadMainAssetAtPath(path),
                null,
-               UIAssetbundleSettings.buildFontTargetPath +"/"+ fileName,
+               UIAssetbundleSettings.buildFontTargetPath + "/" + fileName,
                options,
                UIAssetbundleSettings.instance.buildTarget);
             dep.fontPaths.Add(fileName);
         }
-        foreach ( var clip in clips)
+        foreach (var clip in clips)
         {
             string path = AssetDatabase.GetAssetPath(clip.GetInstanceID());
-            string fileName = clip.name + UIAssetbundleSettings.ext;
+            string fileName = clip.name + UIAssetbundleInfo.ext;
             BuildPipeline.BuildAssetBundle(
                AssetDatabase.LoadMainAssetAtPath(path),
                null,
-               UIAssetbundleSettings.buildAudioTargetPath+"/" + fileName,
+               UIAssetbundleSettings.buildAudioTargetPath + "/" + fileName,
                options,
                UIAssetbundleSettings.instance.buildTarget);
             dep.audioPaths.Add(fileName);
@@ -148,7 +172,7 @@ class NGUIAssetbundleSolutionMenu
         BuildPipeline.BuildAssetBundle(
           AssetDatabase.LoadMainAssetAtPath(goPath),
           null,
-          UIAssetbundleSettings.buildTargetPath + "/" + go.name + UIAssetbundleSettings.ext,
+          UIAssetbundleSettings.buildTargetPath + "/" + go.name + UIAssetbundleInfo.ext,
           options,
           UIAssetbundleSettings.instance.buildTarget);
 
