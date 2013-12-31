@@ -58,6 +58,7 @@ public class UIAssetbundleManager:MonoBehaviour
         GameObject go = Instantiate(bundle.assetBundle.mainAsset) as GameObject;
         go.transform.parent = root;
         go.transform.localScale = Vector3.one;
+        //if i want create a lot,i should't unload
         bundle.assetBundle.Unload(false);
     }
 

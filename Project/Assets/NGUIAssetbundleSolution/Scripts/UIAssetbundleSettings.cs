@@ -39,6 +39,7 @@ public class UIAssetbundleSettings : ScriptableObject
         public string name;
         public List<string> atlasPaths = new List<string>();
         public List<string> fontPaths = new List<string>();
+        public List<string> audioPaths = new List<string>();
     }
     [SerializeField]
     public List<Dependency> dependencies = new List<Dependency>();
