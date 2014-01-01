@@ -61,7 +61,9 @@ class UIAssetbundleListingInspector : Editor
         {
             listing.iconAtlases.Add(new UIAssetbundleListing.IconAtlasAssetbundleEntry());
         }
+        GUILayout.Space(2);
         GUILayout.EndHorizontal();
+
         GUILayout.EndVertical();
 
         if (toRemove.Count > 0)

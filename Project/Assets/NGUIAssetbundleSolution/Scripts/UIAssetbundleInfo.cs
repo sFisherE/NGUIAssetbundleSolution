@@ -51,13 +51,9 @@ public class UIAssetbundleInfo : ScriptableObject
     {
         public string name;
         public List<string> atlasPaths = new List<string>();
-        //i need to store UIAtlas first
         public List<string> materialPaths = new List<string>();
-
         public List<string> dynamicFontPaths = new List<string>();
         public List<string> audioPaths = new List<string>();
-
-        //public List<string> atlasPaths = new List<string>();
     }
     [SerializeField]
     public List<Dependency> dependencies = new List<Dependency>();

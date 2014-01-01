@@ -21,4 +21,14 @@ class Logger
         }
         Debug.Log(str);
     }
+
+
+    public static string GetFullName(GameObject inObject)
+    {
+        if (!inObject)
+            return string.Empty;
+        if (inObject.transform.parent)
+            return Logger.GetFullName(inObject.transform.parent.gameObject) + "/" + inObject.name;
+        return inObject.name;
+    }
 }

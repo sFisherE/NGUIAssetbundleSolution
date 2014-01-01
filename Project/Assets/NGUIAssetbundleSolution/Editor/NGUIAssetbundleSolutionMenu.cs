@@ -110,6 +110,7 @@ class NGUIAssetbundleSolutionMenu
         foreach (var label in labels)
         {
             UIFont uifont = label.font;
+            if (uifont == null) continue;
             if (uifont.isDynamic)
             {
                 Font f = uifont.dynamicFont;
