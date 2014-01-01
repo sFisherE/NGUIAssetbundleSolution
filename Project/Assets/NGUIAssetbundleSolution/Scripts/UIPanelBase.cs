@@ -5,7 +5,11 @@ public class UIPanelBase : MonoBehaviour
 {
     void OnDestroy()
     {
-        Debug.Log("destroy:" + gameObject.name);
-        UIAssetbundleManager.instance.UnloadResource(gameObject.name);
+        if (Application.isPlaying)
+        {
+            Debug.Log("destroy:" + gameObject.name);
+            if (UIAssetbundleManager.instance!=null)
+                UIAssetbundleManager.instance.UnloadResource(gameObject.name);
+        }
     }
 }

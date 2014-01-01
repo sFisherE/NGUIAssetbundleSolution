@@ -88,11 +88,17 @@ class NGUIAssetbundleSolutionMenu
 
         UISprite[] ws = go.GetComponentsInChildren<UISprite>(true);
         List<Texture> textures = new List<Texture>();
+        List<Material> materials = new List<Material>();
         foreach (var w in ws)
         {
             Texture tex = w.atlas.texture;
             if (tex != null && !textures.Contains(tex))
+            {
                 textures.Add(tex);
+            }
+            Material mat = w.atlas.spriteMaterial;
+            if (mat!=null && !materials.Contains(mat))
+                materials.Add(mat);
         }
         //UITexture will use another strategy
 
@@ -115,6 +121,9 @@ class NGUIAssetbundleSolutionMenu
                 Texture tex = uifont.texture;
                 if (tex != null && !textures.Contains(tex))
                     textures.Add(tex);
+                Material mat = uifont.material;
+                if (mat != null && !materials.Contains(mat))
+                    materials.Add(mat);
             }
         }
 
@@ -132,7 +141,7 @@ class NGUIAssetbundleSolutionMenu
         {
             string path = AssetDatabase.GetAssetPath(tex.GetInstanceID());
             //Debug.Log(UIAssetbundleSettings.buildTextureTargetPath);
-            string fileName = tex.name + UIAssetbundleInfo.ext;
+            string fileName = "tex_" + tex.name + UIAssetbundleInfo.ext;
             BuildPipeline.BuildAssetBundle(
                AssetDatabase.LoadMainAssetAtPath(path),
                null,
@@ -145,19 +154,19 @@ class NGUIAssetbundleSolutionMenu
         foreach (var font in dynamicfonts)
         {
             string path = AssetDatabase.GetAssetPath(font.GetInstanceID());
-            string fileName = font.name + UIAssetbundleInfo.ext;
+            string fileName = "font_" + font.name + UIAssetbundleInfo.ext;
             BuildPipeline.BuildAssetBundle(
                AssetDatabase.LoadMainAssetAtPath(path),
                null,
                UIAssetbundleSettings.buildFontTargetPath + "/" + fileName,
                options,
                UIAssetbundleSettings.instance.buildTarget);
-            dep.fontPaths.Add(fileName);
+            dep.dynamicFontPaths.Add(fileName);
         }
         foreach (var clip in clips)
         {
             string path = AssetDatabase.GetAssetPath(clip.GetInstanceID());
-            string fileName = clip.name + UIAssetbundleInfo.ext;
+            string fileName ="audio_"+ clip.name + UIAssetbundleInfo.ext;
             BuildPipeline.BuildAssetBundle(
                AssetDatabase.LoadMainAssetAtPath(path),
                null,
@@ -166,7 +175,22 @@ class NGUIAssetbundleSolutionMenu
                UIAssetbundleSettings.instance.buildTarget);
             dep.audioPaths.Add(fileName);
         }
+        foreach (var mat in materials)
+        {
+            string path = AssetDatabase.GetAssetPath(mat.GetInstanceID());
+            string fileName = "mat_" + mat.name + UIAssetbundleInfo.ext;
+            BuildPipeline.BuildAssetBundle(
+               AssetDatabase.LoadMainAssetAtPath(path),
+               null,
+               UIAssetbundleSettings.buildMaterialTargetPath + "/" + fileName,
+               options,
+               UIAssetbundleSettings.instance.buildTarget);
+            dep.materialPaths.Add(fileName);
+        }
         //////////////////////////////////////////////////////////////////////////
+
+
+
         BuildPipeline.PushAssetDependencies();
         string goPath = AssetDatabase.GetAssetPath(go.GetInstanceID());
         BuildPipeline.BuildAssetBundle(
@@ -180,4 +204,34 @@ class NGUIAssetbundleSolutionMenu
         BuildPipeline.PopAssetDependencies();
     }
 
+    [MenuItem("NGUIAssetbundleSolution/Create AssetBundleListing")]
+    public static void CreateAssetBundleListing()
+    {
+        var so = ScriptableObject.CreateInstance<UIAssetbundleListing>();
+        var path = System.IO.Path.Combine(FolderPathFromSelection(), "Listing.asset");
+        path = AssetDatabase.GenerateUniqueAssetPath(path);//interesting
+        AssetDatabase.CreateAsset(so, path);
+        Selection.activeObject = so;
+        AssetDatabase.SaveAssets();
+    }
+    private static string FolderPathFromSelection()
+    {
+        var selection = Selection.GetFiltered(typeof(Object), SelectionMode.Assets);
+        string path = "Assets";
+        if (selection.Length > 0)
+        {
+            path = AssetDatabase.GetAssetPath(selection[0]);
+            var dummypath = System.IO.Path.Combine(path, "fake.asset");
+            var assetpath = AssetDatabase.GenerateUniqueAssetPath(dummypath);
+            if (assetpath != "")
+            {
+                return path;
+            }
+            else
+            {
+                return System.IO.Path.GetDirectoryName(path);
+            }
+        }
+        return path;
+    }
 }

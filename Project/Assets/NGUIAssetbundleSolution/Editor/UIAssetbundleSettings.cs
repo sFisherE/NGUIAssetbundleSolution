@@ -36,7 +36,11 @@ public class UIAssetbundleSettings : ScriptableObject
     }
 
    public static string buildTargetPath { get { return CreateAssetPath("UI"); } }
+
+   //public static string buildAtlasTargetPath { get { return CreateAssetPath("UI/Atlases"); } }
+   public static string buildMaterialTargetPath { get { return CreateAssetPath("UI/Materials"); } }
    public static string buildTextureTargetPath { get { return CreateAssetPath("UI/Textures"); } }
+
    public static string buildFontTargetPath { get { return CreateAssetPath("UI/Fonts"); } }
    public static string buildAudioTargetPath { get { return CreateAssetPath("UI/Audios"); } }
 
@@ -44,7 +48,9 @@ public class UIAssetbundleSettings : ScriptableObject
     [SerializeField]
     public BuildTarget buildTarget=BuildTarget.Android;
 #endif
+    [SerializeField]
+    public BuildTarget[] platforms;
 
-    
-
+    public GUIStyle addButtonStyle;
+    public GUIStyle deleteButtonStyle;
 }

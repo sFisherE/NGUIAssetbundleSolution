@@ -13,25 +13,37 @@ public class UIAssetbundleManager : MonoBehaviour
     void Awake()
     {
         gameObject.name = "AssetbundleManager";
+        UIAssetbundleManager.instance = this;
     }
-    static UIAssetbundleManager mInstance;
-    public static UIAssetbundleManager instance
+    public static UIAssetbundleManager instance;
+    private void OnApplicationQuit()
     {
-        get
+        instance = null;
+        Destroy(gameObject);
+    }
+
+    public static void Init()
+    {
+        if (!instance)
         {
-            if (!mInstance)
+            // check if there is a GoKitLite instance already available in the scene graph before creating one
+            instance = FindObjectOfType(typeof(UIAssetbundleManager)) as UIAssetbundleManager;
+            if (!instance)
             {
-                mInstance = FindObjectOfType(typeof(UIAssetbundleManager)) as UIAssetbundleManager;
-                if (!mInstance)
-                {
-                    var obj = new GameObject("AssetbundleManager");
-                    mInstance = obj.AddComponent<UIAssetbundleManager>();
-                    DontDestroyOnLoad(obj);
-                }
+                var obj = new GameObject("AssetbundleManager");
+                instance = obj.AddComponent<UIAssetbundleManager>();
+                DontDestroyOnLoad(obj);
             }
-            return mInstance;
         }
     }
+
+    //public static UIAssetbundleManager instance
+    //{
+    //    get
+    //    {
+    //        return mInstance;
+    //    }
+    //}
 
     public class AssetbundleEntry
     {
@@ -43,6 +55,7 @@ public class UIAssetbundleManager : MonoBehaviour
     public List<AssetbundleEntry> loadedTextures = new List<AssetbundleEntry>();
     public List<AssetbundleEntry> loadedAudioClips = new List<AssetbundleEntry>();
     public List<AssetbundleEntry> loadedFonts = new List<AssetbundleEntry>();
+    public List<AssetbundleEntry> loadedMaterials = new List<AssetbundleEntry>();
 
     public void UnloadResource(string name)
     {
@@ -60,15 +73,15 @@ public class UIAssetbundleManager : MonoBehaviour
                     {
                         abe.assetBundle.Unload(true);
                         loadedTextures.Remove(abe);
-                        Debug.Log("unload " + abe.name);
+                        Logger.Log("unload " + abe.name);
                     }
                 }
 
             }
         }
-        if (dep.fontPaths != null && dep.fontPaths.Count > 0)
+        if (dep.dynamicFontPaths != null && dep.dynamicFontPaths.Count > 0)
         {
-            foreach (var path in dep.fontPaths)
+            foreach (var path in dep.dynamicFontPaths)
             {
                 string fontName = path.Substring(0, path.Length - UIAssetbundleInfo.ext.Length);
                 AssetbundleEntry abe = loadedFonts.Find(p => p.name == fontName);
@@ -79,7 +92,7 @@ public class UIAssetbundleManager : MonoBehaviour
                     {
                         abe.assetBundle.Unload(true);
                         loadedFonts.Remove(abe);
-                        Debug.Log("unload " + abe.name);
+                        Logger.Log("unload " + abe.name);
                     }
                 }
             }
@@ -97,10 +110,27 @@ public class UIAssetbundleManager : MonoBehaviour
                     {
                         abe.assetBundle.Unload(true);
                         loadedAudioClips.Remove(abe);
-                        Debug.Log("unload " + abe.name);
+                        Logger.Log("unload " + abe.name);
                     }
                 }
-
+            }
+        }
+        if (dep.materialPaths != null && dep.materialPaths.Count > 0)
+        {
+            foreach (var path in dep.materialPaths)
+            {
+                string audioName = path.Substring(0, path.Length - UIAssetbundleInfo.ext.Length);
+                AssetbundleEntry abe = loadedMaterials.Find(p => p.name == audioName);
+                if (abe != null)
+                {
+                    abe.refCount--;
+                    if (abe.refCount <= 0)
+                    {
+                        abe.assetBundle.Unload(true);
+                        loadedMaterials.Remove(abe);
+                        Logger.Log("unload " + abe.name);
+                    }
+                }
             }
         }
     }
@@ -144,9 +174,9 @@ public class UIAssetbundleManager : MonoBehaviour
             }
         }
         //load font
-        if (dep.fontPaths != null && dep.fontPaths.Count > 0)
+        if (dep.dynamicFontPaths != null && dep.dynamicFontPaths.Count > 0)
         {
-            foreach (var path in dep.fontPaths)
+            foreach (var path in dep.dynamicFontPaths)
             {
                 string fontName = path.Substring(0, path.Length - UIAssetbundleInfo.ext.Length);
                 string fullPath = UIAssetbundleInfo.fontPathUrl + "/" + path;
@@ -198,6 +228,35 @@ public class UIAssetbundleManager : MonoBehaviour
                         abe.assetBundle = www.assetBundle;
                         abe.refCount++;
                         loadedAudioClips.Add(abe);
+                        www.assetBundle.LoadAll();
+                    }
+                }
+            }
+        }
+        if (dep.materialPaths != null && dep.materialPaths.Count > 0)
+        {
+            foreach (var path in dep.materialPaths)
+            {
+                string materialName = path.Substring(0, path.Length - UIAssetbundleInfo.ext.Length);
+                string fullPath = UIAssetbundleInfo.materialPathUrl + "/" + path;
+                AssetbundleEntry abe = loadedMaterials.Find(p => p.name == materialName);
+                if (abe != null)
+                {
+                    abe.refCount++;
+                    yield return null;
+                }
+                else
+                {
+                    using (WWW www = new WWW(fullPath))
+                    {
+                        yield return www;
+                        if (www.error != null)
+                            throw new Exception("WWW download:" + www.error);
+                        abe = new AssetbundleEntry();
+                        abe.name = materialName;
+                        abe.assetBundle = www.assetBundle;
+                        abe.refCount++;
+                        loadedMaterials.Add(abe);
                         www.assetBundle.LoadAll();
                     }
                 }
